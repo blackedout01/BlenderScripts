@@ -258,6 +258,7 @@ def boxBoxIntersection(c1, c2):
                 corner2 = clipSpace[i]
                 clipN = normalize((corner1 + corner2) / 2 - cN.x)
                 clipN -= dot(n, clipN)*n
+                # NOTE: clipN does not need to be normalized
                 
                 cornerOut = []
                 cornerPrev = clipPoints[-1] + Vector()
@@ -265,6 +266,10 @@ def boxBoxIntersection(c1, c2):
                     cornerCurr = clipPoints[j]
                     
                     # Compute intersection
+                    # E: dot(clipN, x - aE) = 0
+                    # g: x = aG + s*rG
+                    # g int E: dot(clipN, aG + s*rG - aE) = 0
+                    # <=> dot(clipN, s*rG) = dot(clipN, aE - aG)
                     # s = dot(clipN, aE - aG)/dot(clipN, rG))
                     rG = cornerPrev - cornerCurr
                     divf = dot(clipN, rG)
@@ -285,6 +290,17 @@ def boxBoxIntersection(c1, c2):
                     
                     cornerPrev = cornerCurr
                 clipPoints = cornerOut
+        else:
+            for i in range(len(clipSpace)):
+                corner1 = clipSpace[i-1]
+                corner2 = clipSpace[i]
+                clipN = (corner1 + corner2) / 2 - cN.x
+                clipN = normalize(clipN - dot(n, clipN)*n)
+                outdot = dot(clipN, clipPoints[0] - corner2)
+                if outdot > 0.0:
+                    clipPoints[0] -= outdot*clipN
+                    break
+                    
         
         for p in clipPoints:
             addpoint(p, (0.6, 1, 0, 1))
